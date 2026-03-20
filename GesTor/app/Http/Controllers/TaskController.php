@@ -9,13 +9,31 @@ class TaskController extends Controller
 {
     public function index($projectId)
     {
-        $tasks = Task::with('users')
+        $user = auth()->user();
+
+        // Tareas creadas por ti
+        $ownTasks = Task::with('users')
             ->where('project_id', $projectId)
+            ->where('user_id', $user->id)
+            ->get();
+
+        // Tareas donde participas
+        $assignedTasks = Task::with('users')
+            ->where('project_id', $projectId)
+            ->whereHas('users', function ($q) use ($user) {
+                $q->where('users.id', $user->id);
+            })
+            ->where('user_id', '!=', $user->id)
             ->get();
 
         $users = \App\Models\User::all();
 
-        return view('tasks.index', compact('tasks', 'projectId', 'users'));
+        return view('tasks.index', compact(
+            'ownTasks',
+            'assignedTasks',
+            'projectId',
+            'users'
+        ));
     }
 
     public function create()
@@ -33,9 +51,20 @@ class TaskController extends Controller
             'users' => 'array'
         ]);
 
-        $task = Task::create($request->all());
+        //  construir datos manualmente
+        $data = $request->only([
+            'project_id',
+            'title',
+            'state',
+            'deadline'
+        ]);
 
-        //aquí se usa la tabla pivote
+        //  asignar creador
+        $data['user_id'] = auth()->id();
+
+        $task = Task::create($data);
+
+        //  pivot
         if ($request->users) {
             $task->users()->sync($request->users);
         }
@@ -55,7 +84,12 @@ class TaskController extends Controller
 
     public function update(Request $request, Task $task)
     {
-        $task->update($request->all());
+        $task->update($request->only([
+                'title',
+                'state',
+                'deadline',
+                'project_id'
+            ]));
 
         if ($request->users) {
             $task->users()->sync($request->users);
@@ -68,6 +102,6 @@ class TaskController extends Controller
     {
         $task->delete();
 
-        return redirect()->route('tasks.index');
+        return back();
     }
 }

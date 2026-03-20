@@ -15,5 +15,8 @@ class Project extends Model
         'user_id'
     ];
 
-    
+    public function tasks()
+    {
+        return $this->hasMany(\App\Models\Task::class, 'project_id');
+    }
 }

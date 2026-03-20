@@ -34,7 +34,6 @@
         color: #39ff14;
         border: 1px solid #39ff14;
         background: transparent;
-        transition: 0.3s;
     }
 
     .btn-neon-green:hover {
@@ -50,7 +49,6 @@
         color: #ff4d4d;
         border: 1px solid #ff4d4d;
         background: transparent;
-        transition: 0.3s;
     }
 
     .btn-neon-red:hover {
@@ -63,76 +61,115 @@
     }
 </style>
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="fw-bold text-white text-5xl">Proyectos</h1>
+<!-- ========================= -->
+<!-- 🔹 TUS PROYECTOS -->
+<!-- ========================= -->
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="text-white fw-bold">Tus Proyectos</h2>
 
     <a href="{{ route('projects.create') }}"
        class="btn"
-       style="background-color:#39ff14; color:black; border:none;">
+       style="background-color:#39ff14; color:black;">
         + Crear Proyecto
     </a>
 </div>
 
-<div class="row">
+<div class="row mb-5">
 
-    @forelse ($projects as $project)
-        <div class="col-md-4 mb-4">
+@forelse ($ownProjects as $project)
+    <div class="col-md-4 mb-4">
 
-            <div class="card bg-dark text-light card-neon h-100"
-                 onclick="window.location='{{ route('tasks.index', $project->id) }}'">
+        <div class="card bg-dark text-light card-neon h-100"
+             onclick="window.location='{{ route('tasks.index', $project->id) }}'">
 
-                <div class="card-body">
+            <div class="card-body">
+                <h5 class="neon-green neon-green-hover">
+                    {{ $project->name }}
+                </h5>
 
-                    <h5 class="card-title neon-green neon-green-hover text-3xl">
-                        {{ $project->name }}
-                    </h5>
+                <p class="text-white">
+                    Tareas: {{ $project->tasks_count }}
+                </p>
+            </div>
 
-                    <p class="card-text text-white">
-                        Tareas: {{ $project->tasks_count }}
-                    </p>
+            <div class="card-footer d-flex justify-content-between">
 
-                </div>
+                <!-- EDITAR -->
+                <a href="#"
+                   onclick="event.stopPropagation(); openEditModal({{ $project->id }}, @js($project->name))"
+                   class="btn btn-sm btn-neon-green">
+                    Editar
+                </a>
 
-                <div class="card-footer d-flex justify-content-between bg-transparent border-top border-secondary">
+                <!-- ELIMINAR -->
+                <form method="POST"
+                      action="{{ route('projects.destroy', $project->id) }}"
+                      onclick="event.stopPropagation();">
+                    @csrf
+                    @method('DELETE')
 
-                    <!-- EDITAR -->
-                    <a href="#"
-                       onclick="event.stopPropagation(); openEditModal({{ $project->id }}, @js($project->name))"
-                       class="btn btn-sm btn-neon-green">
-                        Editar
-                    </a>
-
-                    <!-- ELIMINAR -->
-                    <form method="POST"
-                          action="{{ route('projects.destroy', $project->id) }}"
-                          onclick="event.stopPropagation();">
-                        @csrf
-                        @method('DELETE')
-
-                        <button class="btn btn-sm btn-neon-red">
-                            Eliminar
-                        </button>
-                    </form>
-
-                </div>
+                    <button class="btn btn-sm btn-neon-red">
+                        Eliminar
+                    </button>
+                </form>
 
             </div>
 
         </div>
 
-    @empty
-        <p class="text-muted">No hay proyectos aún.</p>
-    @endforelse
+    </div>
+
+@empty
+    <p class="text-white">No tienes proyectos.</p>
+@endforelse
 
 </div>
 
-<!-- MODAL EDITAR -->
+<!-- ========================= -->
+<!-- 🔹 PROYECTOS DONDE PARTICIPAS -->
+<!-- ========================= -->
+
+<h2 class="text-white fw-bold mb-3">Proyectos donde participas</h2>
+
+<div class="row">
+
+@forelse ($joinedProjects as $project)
+    <div class="col-md-4 mb-4">
+
+        <div class="card bg-dark text-light card-neon h-100"
+             onclick="window.location='{{ route('tasks.index', $project->id) }}'">
+
+            <div class="card-body">
+                <h5 class="neon-green neon-green-hover">
+                    {{ $project->name }}
+                </h5>
+
+                <p class="text-white">
+                    Tareas: {{ $project->tasks_count }}
+                </p>
+            </div>
+
+        </div>
+
+    </div>
+
+@empty
+    <p class="text-white">No participas en proyectos.</p>
+@endforelse
+
+</div>
+
+<!-- ========================= -->
+<!-- 🔹 MODAL EDITAR -->
+<!-- ========================= -->
+
 <div class="modal fade" id="editProjectModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content bg-dark text-light border border-success">
 
             <div class="modal-header border-secondary">
-                <h5 class="modal-title text-success text-3xl">Editar Proyecto</h5>
+                <h5 class="modal-title text-success">Editar Proyecto</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
 
@@ -141,18 +178,13 @@
                 @method('PUT')
 
                 <div class="modal-body">
-
-                    <div class="mb-3">
-                        <label class="form-label">Nombre</label>
-                        <input type="text"
-                               name="name"
-                               id="projectName"
-                               class="form-control bg-black text-light border-secondary">
-                    </div>
-
+                    <input type="text"
+                           name="name"
+                           id="projectName"
+                           class="form-control bg-black text-light border-secondary">
                 </div>
 
-                <div class="modal-footer border-secondary">
+                <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                         Cancelar
                     </button>
@@ -169,16 +201,15 @@
 </div>
 
 <script>
-    function openEditModal(id, name) {
-        const form = document.getElementById('editProjectForm');
-        const input = document.getElementById('projectName');
+function openEditModal(id, name) {
+    const form = document.getElementById('editProjectForm');
+    const input = document.getElementById('projectName');
 
-        form.action = `/projects/${id}`;
-        input.value = name;
+    form.action = `/projects/${id}`;
+    input.value = name;
 
-        let modal = new bootstrap.Modal(document.getElementById('editProjectModal'));
-        modal.show();
-    }
+    new bootstrap.Modal(document.getElementById('editProjectModal')).show();
+}
 </script>
 
 @endsection

@@ -6,16 +6,29 @@ use App\Models\Project;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
+
 class ProjectController extends Controller
 {
-    // Mostrar proyectos del usuario
+
+
     public function index()
     {
-        $projects = Project::where('user_id', Auth::id())
-            ->latest()
+        $user = Auth::user();
+
+        // Tus proyectos
+        $ownProjects = Project::withCount('tasks')
+            ->where('user_id', $user->id)
             ->get();
 
-        return view('projects.index', compact('projects'));
+        // Proyectos donde participas (a través de tareas)
+        $joinedProjects = Project::withCount('tasks')
+            ->whereHas('tasks.users', function ($q) use ($user) {
+                $q->where('users.id', $user->id);
+            })
+            ->where('user_id', '!=', $user->id)
+            ->get();
+
+        return view('projects.index', compact('ownProjects', 'joinedProjects'));
     }
 
     // Formulario de creación
