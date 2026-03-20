@@ -7,10 +7,15 @@ use App\Models\Task;
 
 class TaskController extends Controller
 {
-    public function index()
+    public function index($projectId)
     {
-        $tasks = Task::all();
-        return view('tasks.index', compact('tasks'));
+        $tasks = Task::with('users')
+            ->where('project_id', $projectId)
+            ->get();
+
+        $users = \App\Models\User::all();
+
+        return view('tasks.index', compact('tasks', 'projectId', 'users'));
     }
 
     public function create()
@@ -23,14 +28,19 @@ class TaskController extends Controller
         $request->validate([
             'project_id' => 'required|exists:projects,id',
             'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
             'state' => 'required|in:pending,in_progress,completed',
             'deadline' => 'required|date',
+            'users' => 'array'
         ]);
 
-        Task::create($request->all());
+        $task = Task::create($request->all());
 
-        return redirect()->route('tasks.index');
+        //aquí se usa la tabla pivote
+        if ($request->users) {
+            $task->users()->sync($request->users);
+        }
+
+        return back();
     }
 
     public function show(Task $task)
@@ -45,17 +55,13 @@ class TaskController extends Controller
 
     public function update(Request $request, Task $task)
     {
-        $request->validate([
-            'project_id' => 'required|exists:projects,id',
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'state' => 'required|in:pending,in_progress,completed',
-            'deadline' => 'required|date',
-        ]);
-
         $task->update($request->all());
 
-        return redirect()->route('tasks.index');
+        if ($request->users) {
+            $task->users()->sync($request->users);
+        }
+
+        return back();
     }
 
     public function destroy(Task $task)

@@ -14,4 +14,6 @@ class Project extends Model
         'tasks_count',
         'user_id'
     ];
+
+    
 }
